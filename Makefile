@@ -14,19 +14,14 @@ NAME	=	myworld
 
 CC	= 	gcc
 
-# Dirección de la carpeta de pruebas
 TESTS_DIR = tests/
 
-# Archivos de prueba (ajusta estos según tus pruebas)
 TESTS_SRC = $(TESTS_DIR)test_myworld.c
 
-# Objetos de prueba
 TESTS_OBJ = $(TESTS_SRC:.c=.o)
 
-# Nombre del ejecutable de pruebas
 TESTS_NAME = unit_tests
 
-# Flags para criterio (framework de pruebas de Epitech)
 TESTS_FLAGS = -lcriterion --coverage
 
 all: $(NAME)
@@ -45,10 +40,5 @@ fclean: clean
 	rm -f $(TESTS_NAME)
 
 re: fclean all
-
-# Regla para compilar y ejecutar las pruebas unitarias
-tests_run: $(TESTS_OBJ) $(filter-out src/myworld.o, $(OBJ))
-	$(CC) -o $(TESTS_NAME) $(TESTS_OBJ) $(filter-out src/myworld.o, $(OBJ)) $(TESTS_FLAGS) $(CSFML)
-	./$(TESTS_NAME)
 
 .PHONY: all clean fclean re tests_run
