@@ -6,15 +6,11 @@
 ## You can even have multiple lines if you want !
 ##
 
-SRC	=	src/extra_fun.c\
-		src/create_stuff.c\
-		src/myworld.c
+SRC	=	myworld.c
 
 OBJ	=	$(SRC:.c=.o)
 
 NAME	=	myworld
-
-CSFML	=	-lcsfml-graphics -lcsfml-system -lcsfml-audio -lcsfml-window -lm
 
 CC	= 	gcc
 
