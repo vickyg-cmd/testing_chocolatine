@@ -1,0 +1,100 @@
+name: Chocolatine workflow
+
+on:
+  push:
+  pull_request:
+    types: [opened]
+
+env:
+  MIRROR_URL: ${{ secrets.MIRROR_URL }}
+  EXECUTABLES: myworld
+
+jobs:
+  check_coding_style:
+    runs-on: ubuntu-latest
+    container: ghcr.io/epitech/coding-style-checker:latest
+    if: |
+      !startsWith(github.ref, 'refs/heads/ga-ignore-') &&
+      github.repository != env.MIRROR_URL
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+
+      - name: Run coding style checker
+        run: check.sh $(pwd) $(pwd)
+
+      - name: Display coding style errors
+        if: always()
+        run: |
+          if [ -s coding-style-reports.log ]; then
+            while IFS= read -r line; do
+              file=$(echo "$line" | cut -d: -f1)
+              line_number=$(echo "$line" | cut -d: -f2)
+              error_type=$(echo "$line" | cut -d: -f3)
+              error_message=$(echo "$line" | cut -d: -f4-)
+              echo "::error file=$file,line=$line_number::$error_type: $error_message"
+            done < coding-style-reports.log
+            exit 1
+          fi
+
+  check_program_compilation:
+    needs: check_coding_style
+    runs-on: ubuntu-latest
+    container: epitechcontent/epitest-docker:latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+
+      - name: Compile program
+        timeout-minutes: 2
+        run: make
+
+      - name: Clean build files
+        run: make clean
+
+      - name: Check executables
+        run: |
+          IFS=',' read -ra EXEC <<< "${{ env.EXECUTABLES }}"
+          for executable in "${EXEC[@]}"; do
+            if [ ! -f "$executable" ]; then
+              echo "::error file=$executable::Executable not found: $executable"
+              exit 1
+            elif [ ! -x "$executable" ]; then
+              echo "::error file=$executable::File is not executable: $executable"
+              exit 1
+            fi
+          done
+
+  run_tests:
+    needs: check_program_compilation
+    runs-on: ubuntu-latest
+    container: epitechcontent/epitest-docker:latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+
+      - name: Run tests
+        timeout-minutes: 2
+        run: make tests_run
+
+  push_to_mirror:
+    needs: run_tests
+    if: github.event_name == 'push' && !startsWith(github.ref, 'refs/heads/ga-ignore-') && github.repository != env.MIRROR_URL
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Push to mirror
+        uses: pixta-dev/repository-mirroring-action@v1
+        with:
+          target_repo_url: ${{ env.MIRROR_URL }}  # URL del repositorio espejo, configurada como secret
+          ssh_private_key: ${{ secrets.GIT_SSH_PRIVATE_KEY }} # Clave SSH para acceder al repositorio espejo
