@@ -1,3 +1,2 @@
 ./Makefile:1: MINOR:C-G1
-./myworld:1: MAJOR:C-O1
 ./myworld.o:1: MAJOR:C-O1
