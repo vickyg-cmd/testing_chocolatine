@@ -12,6 +12,7 @@
 
 int main(void)
 {
+    int i = 0;
     printf("Yesss, works ;)");
     return 0;
 }
